@@ -3,17 +3,10 @@ const allCard = require("../data/data.json");
 
 //get
 exports.getAllCard = (req, res, next) => {
- const {page = 1, limit = 30 } = req.query
- console.log(req.query.page)
 
-
-  Card.find()
+  Card.find(req.query)
     .then((cards) => {
-      const startCard = (limit * (page-1)) 
-      
-      const endCard = (startCard+limit)-1
-      console.log(startCard + " end " +endCard)
-      res.status(200).json(cards.slice(startCard, endCard));
+      res.status(200).json(cards.slice(0, 20));
     })
     .catch((error) => {
       res.status(401).json({ error });
