@@ -1,4 +1,5 @@
 const mongoose = require('mongoose')
+const mongoosePaginate = require('mongoose-paginate');
 
 const cardSchema = mongoose.Schema({
     id:{ type : String, require : true },
@@ -31,6 +32,6 @@ const cardSchema = mongoose.Schema({
         image_url_cropped:{ type : String, require : false },
     }]
 
-})
-
+});
+cardSchema.plugin(mongoosePaginate);
 module.exports = mongoose.model('Card', cardSchema);
