@@ -9,5 +9,6 @@ router.get('/:id' , cardCtrl.getCard)
 
 router.post('/createData',  cardCtrl.createAllCard)
 
+router.post('/' , cardCtrl.postSearchCard)
 
 module.exports = router;
