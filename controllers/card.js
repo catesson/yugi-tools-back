@@ -65,8 +65,10 @@ exports.postSearchCard = (req, res, next) => {
        const startCard = (limit * (page-1)) 
        
        const endCard = (startCard+limit)-1
-       console.log(startCard + " end " +endCard)
-       res.status(200).json(cards.slice(startCard, endCard));
+       const totalCards = cards.length
+       const maxPage = Math.ceil(totalCards/limit)
+       console.log(maxPage)
+       res.status(200).json({cards: cards.slice(startCard, endCard), maxPage : maxPage });
      })
      .catch((error) => {
        res.status(401).json({ error });
