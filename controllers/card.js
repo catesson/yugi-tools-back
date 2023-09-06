@@ -2,21 +2,6 @@ const Card = require("../models/Card");
 const allCard = require("../data/data.json");
 
 //get
-exports.getAllCard = (req, res, next) => {
-  const { page = 1, limit = 30 } = req.query;
-
-  Card.find(req.query)
-    .then((cards) => {
-      const startCard = limit * (page - 1);
-
-      const endCard = startCard + limit - 1;
-      console.log(startCard + " end " + endCard);
-      res.status(200).json(cards.slice(startCard, endCard));
-    })
-    .catch((error) => {
-      res.status(401).json({ error });
-    });
-};
 
 exports.getCard = (req, res, next) => {
   Card.findOne({ id: req.params.id })
