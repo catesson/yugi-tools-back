@@ -33,6 +33,7 @@ exports.createAllCard = (req, res, next) => {
 
 exports.postSearchCard = async (req, res, next) => {
   const { page = 1, limit = 30 } = req.query;
+
   const getQuerySearch = () => {
     const {
       name,
@@ -49,18 +50,18 @@ exports.postSearchCard = async (req, res, next) => {
     } = req.query;
     
     return {
-      name: new RegExp(name, "i"),
-      archetype: new RegExp(archetype, "i"),
-      attribute: new RegExp(attribute, 'i'),
-      type: new RegExp(type, 'i'),
-      race: new RegExp(race, 'i'),
-      desc: new RegExp(desc, 'i'),
-      frameType: new RegExp(frameType, 'i'),
+      name: name ? new RegExp(name, "i") : undefined,
+      archetype: archetype ? new RegExp(archetype, "i"): undefined,
+      attribute: attribute ? new RegExp(attribute, 'i'): undefined,
+      type: type ? new RegExp(type, 'i'): undefined,
+      race: race ? new RegExp(race, 'i'): undefined,
+      desc: desc ? new RegExp(desc, 'i'): undefined,
+      frameType: frameType ? new RegExp(frameType, 'i'): undefined,
       linkval:linkval,
       atk: atk,
       def: def,
       level: level
-  };}
+  }}
 
   const querySearch = getQuerySearch();
 
@@ -73,13 +74,33 @@ exports.postSearchCard = async (req, res, next) => {
 
   console.log(querySearch);
   try {
-    //return les cards + paggination
-    const cards = await Card.find(querySearch, null, {
-      skip: (page - 1) * limit,
-      limit,
-    });
-    const totalCards = await Card.estimatedDocumentCount();
-    const maxPage = Math.ceil(totalCards / limit);
+    //Demander explication a Quentin ! 
+    const pipeline = [
+      {
+        $match: querySearch // Filtrez les cartes en fonction de votre requête de recherche
+      },
+      {
+        $facet: {
+          cards: [
+            { $skip: (page - 1) * limit },
+            { $limit: limit }
+          ],
+          totalCards: [
+            { $count: "count" }
+          ]
+        }
+      },
+      {
+        $unwind: "$totalCards" // Désassemblez le tableau résultant pour obtenir un objet
+      }
+    ];
+    
+    const results = await Card.aggregate(pipeline);
+    
+    const cards = results[0].cards;
+    const totalCards = results[0].totalCards ? results[0].totalCards.count : 0;
+    const maxPage = Math.ceil(await totalCards / limit);
+    console.log('toatle cards : ' + totalCards + " limit : " + limit + "maxPage : "+ maxPage)
 
     return res.status(200).json({ cards: cards, maxPage: maxPage });
   } catch {
