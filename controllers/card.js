@@ -8,7 +8,11 @@ exports.getCard = (req, res, next) => {
     .then((card) => res.status(201).json(card))
     .catch((error) => res.status(400).json(error));
 };
-
+exports.getType = (req, res, next) => {
+  Card.findOne({ id: req.params.id })
+    .then((card) => res.status(201).json(card))
+    .catch((error) => res.status(400).json(error));
+};
 //post
 //création des cartes dans la bdd
 exports.createAllCard = (req, res, next) => {
@@ -46,64 +50,99 @@ exports.postSearchCard = async (req, res, next) => {
       linkval,
       atk,
       def,
-      level
+      level,
     } = req.query;
-    
+
     return {
       name: name ? new RegExp(name, "i") : undefined,
-      archetype: archetype ? new RegExp(archetype, "i"): undefined,
-      attribute: attribute ? new RegExp(attribute, 'i'): undefined,
-      type: type ? new RegExp(type, 'i'): undefined,
-      race: race ? new RegExp(race, 'i'): undefined,
-      desc: desc ? new RegExp(desc, 'i'): undefined,
-      frameType: frameType ? new RegExp(frameType, 'i'): undefined,
-      linkval:linkval,
+      archetype: archetype ? new RegExp(archetype, "i") : undefined,
+      attribute: attribute ? new RegExp(attribute, "i") : undefined,
+      type: type ? new RegExp(type, "i") : undefined,
+      race: race ? new RegExp(race, "i") : undefined,
+      desc: desc ? new RegExp(desc, "i") : undefined,
+      frameType: frameType ? new RegExp(frameType, "i") : undefined,
+      linkval: linkval,
       atk: atk,
       def: def,
-      level: level
-  }}
+      level: level,
+    };
+  };
 
   const querySearch = getQuerySearch();
 
   //supprimer les objet du body qui aurai une valeur null ou undefined
   for (const clé in querySearch) {
-    if (querySearch[clé] == null || querySearch[clé] == undefined) {
+    if (
+      querySearch[clé] == null ||
+      querySearch[clé] == undefined ||
+      querySearch[clé] == ""
+    ) {
       delete querySearch[clé];
     }
   }
 
   console.log(querySearch);
   try {
-    //Demander explication a Quentin ! 
-    const pipeline = [
-      {
-        $match: querySearch // Filtrez les cartes en fonction de votre requête de recherche
-      },
-      {
-        $facet: {
-          cards: [
-            { $skip: (page - 1) * limit },
-            { $limit: limit }
-          ],
-          totalCards: [
-            { $count: "count" }
-          ]
-        }
-      },
-      {
-        $unwind: "$totalCards" // Désassemblez le tableau résultant pour obtenir un objet
-      }
-    ];
-    
-    const results = await Card.aggregate(pipeline);
-    
-    const cards = results[0].cards;
-    const totalCards = results[0].totalCards ? results[0].totalCards.count : 0;
-    const maxPage = Math.ceil(await totalCards / limit);
-    console.log('toatle cards : ' + totalCards + " limit : " + limit + "maxPage : "+ maxPage)
+   // Demander explication a Quentin !
+        const pipeline = [
+          {
+            $match: {
+              $and: [
+                querySearch, // Vos conditions de recherche
+                { "cards.frameType": { $ne: "skill" } }, // Exclure les cartes ayant un frameType "skill"
+              ],
+            },
+          },
+          {
+            $facet: {
+              cards: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+              totalCards: [{ $count: "count" }],
+            },
+          },
+          {
+            $unwind: "$totalCards", // Désassemblez le tableau résultant pour obtenir un objet
+          },
+        ];
+    //Pipline pour récupérer les types et les attributs
+        const FilterPipline = [
+          {
+            $match: {
+              "type": { $regex: /monster/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+            },
+          },
+          {
+            $facet: {
+              race: [{ $group: { _id: "$race" } }],
+              attribute: [{ $group: { _id: "$attribute" } }],
+            },
+          },
+        ];
 
-    return res.status(200).json({ cards: cards, maxPage: maxPage });
-  } catch {
+
+    const results = await Card.aggregate(pipeline);
+
+    const filter = await Card.aggregate(FilterPipline);
+    const cards = results[0].cards;
+    const race = filter[0].race;
+    const attribute = filter[0].attribute;
+    const totalCards = results[0].totalCards ? results[0].totalCards.count : 0;
+    const maxPage = Math.ceil((await totalCards) / limit);
+    console.log(
+      "toatle cards : " +
+        totalCards +
+        " limit : " +
+        limit +
+        "maxPage : " +
+        maxPage
+    );
+
+    return res.status(200).json({
+      cards: cards,
+      maxPage: maxPage,
+      race: race,
+      attribute: attribute,
+    });
+  } catch (error) {
     return res.status(401).json({ error });
   }
-}
+};
