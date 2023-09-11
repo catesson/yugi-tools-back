@@ -9,31 +9,28 @@ exports.getCard = (req, res, next) => {
     .catch((error) => res.status(400).json(error));
 };
 exports.getMonsterFilter = async (req, res, next) => {
-  console.log("test")
- try{
-  //Pipline pour récupérer les types et les attributs
-  const FilterPipline = [
-    {
-      $match: {
-        "type": { $regex: /monster/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+  try {
+    //Pipline pour récupérer les types et les attributs
+    const FilterPipline = [
+      {
+        $match: {
+          type: { $regex: /monster/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+        },
       },
-    },
-    {
-      $facet: {
-        race: [{ $group: { _id: "$race" } }],
-        attribute: [{ $group: { _id: "$attribute" } }],
+      {
+        $facet: {
+          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }],
+          attribute: [{ $group: { _id: "$attribute" }}, {$sort: { _id: 1 } }],
+        },
       },
-    },
-  ];
+    ];
 
-  const filter = await Card.aggregate(FilterPipline);
-  console.log(filter)
+    const filter = await Card.aggregate(FilterPipline);
     const race = filter[0].race;
     const attribute = filter[0].attribute;
     return res.status(200).json({
       race: race,
-      attribute: attribute
-     
+      attribute: attribute,
     });
   } catch (error) {
     return res.status(401).json({ error });
@@ -109,32 +106,31 @@ exports.postSearchCard = async (req, res, next) => {
 
   console.log(querySearch);
   try {
-   // Demander explication a Quentin !
-        const pipeline = [
-          {
-            $match: {
-              $and: [
-                querySearch, // Vos conditions de recherche
-                { "cards.frameType": { $ne: "skill" } }, // Exclure les cartes ayant un frameType "skill"
-              ],
-            },
-          },
-          {
-            $facet: {
-              cards: [{ $skip: (page - 1) * limit }, { $limit: limit }],
-              totalCards: [{ $count: "count" }],
-            },
-          },
-          {
-            $unwind: "$totalCards", // Désassemblez le tableau résultant pour obtenir un objet
-          },
-        ];
-    
+    // Demander explication a Quentin !
+    const pipeline = [
+      {
+        $match: {
+          $and: [
+            querySearch, // Vos conditions de recherche
+            { "cards.frameType": { $ne: "skill" } }, // Exclure les cartes ayant un frameType "skill"
+          ],
+        },
+      },
+      {
+        $facet: {
+          cards: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+          totalCards: [{ $count: "count" }],
+        },
+      },
+      {
+        $unwind: "$totalCards", // Désassemblez le tableau résultant pour obtenir un objet
+      },
+    ];
 
     const results = await Card.aggregate(pipeline);
 
     const cards = results[0].cards;
-    
+
     const totalCards = results[0].totalCards ? results[0].totalCards.count : 0;
     const maxPage = Math.ceil((await totalCards) / limit);
     console.log(
@@ -149,7 +145,6 @@ exports.postSearchCard = async (req, res, next) => {
     return res.status(200).json({
       cards: cards,
       maxPage: maxPage,
-     
     });
   } catch (error) {
     return res.status(401).json({ error });
