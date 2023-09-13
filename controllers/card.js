@@ -78,10 +78,10 @@ exports.postSearchCard = async (req, res, next) => {
 
     return {
       name: name ? new RegExp(name, "i") : undefined,
-      archetype: archetype ? new RegExp(archetype, "i") : undefined,
-      attribute: attribute ? new RegExp(attribute, "i") : undefined,
-      type: type ? new RegExp(type, "i") : undefined,
-      race: race ? new RegExp(race, "i") : undefined,
+      archetype: archetype,
+      attribute: attribute,
+      type: type ,
+      race: race,
       desc: desc ? new RegExp(desc, "i") : undefined,
       frameType: frameType ? new RegExp(frameType, "i") : undefined,
       linkval: linkval,
