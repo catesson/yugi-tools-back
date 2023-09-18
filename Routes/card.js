@@ -5,6 +5,10 @@ const cardCtrl = require("../controllers/card")
 
 router.get('/monster_filter' , cardCtrl.getMonsterFilter)
 
+router.get('/magic_filter' , cardCtrl.getMagicFilter)
+
+router.get('/trap_filter' , cardCtrl.getTrapFilter)
+
 router.get('/:id' , cardCtrl.getCard)
 
 

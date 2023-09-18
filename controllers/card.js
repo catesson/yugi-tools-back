@@ -8,6 +8,60 @@ exports.getCard = (req, res, next) => {
     .then((card) => res.status(201).json(card))
     .catch((error) => res.status(400).json(error));
 };
+
+exports.getTrapFilter = async (req, res, next) => {
+  try {
+    //Pipline pour récupérer les types et les attributs
+    const FilterPipline = [
+      {
+        $match: {
+          frameType: { $regex: /trap/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+        },
+      },
+      {
+        $facet: {
+          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }]
+        },
+      },
+    ];
+
+    const filter = await Card.aggregate(FilterPipline);
+    const race = filter[0].race;
+
+    return res.status(200).json({
+      race: race
+    });
+  } catch (error) {
+    return res.status(401).json({ error });
+  }
+};
+
+exports.getMagicFilter = async (req, res, next) => {
+  try {
+    //Pipline pour récupérer les types et les attributs
+    const FilterPipline = [
+      {
+        $match: {
+          frameType: { $regex: /spell/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+        },
+      },
+      {
+        $facet: {
+          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }]
+        },
+      },
+    ];
+
+    const filter = await Card.aggregate(FilterPipline);
+    const race = filter[0].race;
+
+    return res.status(200).json({
+      race: race
+    });
+  } catch (error) {
+    return res.status(401).json({ error });
+  }
+};
 exports.getMonsterFilter = async (req, res, next) => {
   try {
     //Pipline pour récupérer les types et les attributs
