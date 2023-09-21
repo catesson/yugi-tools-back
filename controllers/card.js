@@ -9,10 +9,46 @@ exports.getCard = (req, res, next) => {
     .catch((error) => res.status(400).json(error));
 };
 
-exports.getTrapFilter = async (req, res, next) => {
+
+
+exports.getFilter = async (req, res, next) => {
   try {
     //Pipline pour récupérer les types et les attributs
-    const FilterPipline = [
+    const MonsterFilterPipline = [
+      {
+        $match: {
+          type: { $regex: /monster/i }, // Filtrez les documents avec "Type" contenant "monster" (insensible à la casse)
+        },
+      },
+      {
+        $facet: {
+          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }],
+          attribute: [{ $group: { _id: "$attribute" }}, {$sort: { _id: 1 } }],
+        },
+      },
+    ];
+    const monsterFilter = await Card.aggregate(MonsterFilterPipline);
+    const monsterRace = monsterFilter[0].race;
+    const attribute = monsterFilter[0].attribute;
+
+    //filtre pour les magies
+    const MagicFilterPipline = [
+      {
+        $match: {
+          frameType: { $regex: /spell/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
+        },
+      },
+      {
+        $facet: {
+          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }]
+        },
+      },
+    ];
+    const magicFilter = await Card.aggregate(MagicFilterPipline);
+    const magicRace = magicFilter[0].race;
+
+    // filter pour les piège
+    const TrapFilterPipline = [
       {
         $match: {
           frameType: { $regex: /trap/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
@@ -25,66 +61,14 @@ exports.getTrapFilter = async (req, res, next) => {
       },
     ];
 
-    const filter = await Card.aggregate(FilterPipline);
-    const race = filter[0].race;
+    const trapFilter = await Card.aggregate(TrapFilterPipline);
+    const trapRace = trapFilter[0].race;
 
     return res.status(200).json({
-      race: race
-    });
-  } catch (error) {
-    return res.status(401).json({ error });
-  }
-};
-
-exports.getMagicFilter = async (req, res, next) => {
-  try {
-    //Pipline pour récupérer les types et les attributs
-    const FilterPipline = [
-      {
-        $match: {
-          frameType: { $regex: /spell/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
-        },
-      },
-      {
-        $facet: {
-          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }]
-        },
-      },
-    ];
-
-    const filter = await Card.aggregate(FilterPipline);
-    const race = filter[0].race;
-
-    return res.status(200).json({
-      race: race
-    });
-  } catch (error) {
-    return res.status(401).json({ error });
-  }
-};
-exports.getMonsterFilter = async (req, res, next) => {
-  try {
-    //Pipline pour récupérer les types et les attributs
-    const FilterPipline = [
-      {
-        $match: {
-          type: { $regex: /monster/i }, // Filtrez les documents avec "frameType" contenant "monster" (insensible à la casse)
-        },
-      },
-      {
-        $facet: {
-          race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }],
-          attribute: [{ $group: { _id: "$attribute" }}, {$sort: { _id: 1 } }],
-        },
-      },
-    ];
-
-    const filter = await Card.aggregate(FilterPipline);
-    const race = filter[0].race;
-    const attribute = filter[0].attribute;
-    return res.status(200).json({
-      race: race,
+      monsterRace: monsterRace,
       attribute: attribute,
+      magicRace: magicRace,
+      trapRace:trapRace
     });
   } catch (error) {
     return res.status(401).json({ error });
@@ -134,7 +118,7 @@ exports.postSearchCard = async (req, res, next) => {
       name: name ? new RegExp(name, "i") : undefined,
       archetype: archetype,
       attribute: attribute,
-      type: type ,
+      type: type ? new RegExp(type, "i") : undefined,
       race: race,
       desc: desc ? new RegExp(desc, "i") : undefined,
       frameType: frameType ? new RegExp(frameType, "i") : undefined,
@@ -151,7 +135,7 @@ exports.postSearchCard = async (req, res, next) => {
   for (const clé in querySearch) {
     if (
       querySearch[clé] == null ||
-      querySearch[clé] == undefined ||
+      querySearch[clé] === undefined ||
       querySearch[clé] == ""
     ) {
       delete querySearch[clé];
@@ -166,7 +150,7 @@ exports.postSearchCard = async (req, res, next) => {
         $match: {
           $and: [
             querySearch, // Vos conditions de recherche
-            { "cards.frameType": { $ne: "skill" } }, // Exclure les cartes ayant un frameType "skill"
+
           ],
         },
       },
