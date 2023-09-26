@@ -24,12 +24,14 @@ exports.getFilter = async (req, res, next) => {
         $facet: {
           race: [{ $group: { _id: "$race" }},{ $sort: { _id: 1 } }],
           attribute: [{ $group: { _id: "$attribute" }}, {$sort: { _id: 1 } }],
+          frameType: [{ $group: { _id: "$frameType" }}, {$sort: { _id: 1 } }]
         },
       },
     ];
     const monsterFilter = await Card.aggregate(MonsterFilterPipline);
     const monsterRace = monsterFilter[0].race;
     const attribute = monsterFilter[0].attribute;
+    const frameTypeMonster = monsterFilter[0].frameType;
 
     //filtre pour les magies
     const MagicFilterPipline = [
@@ -63,12 +65,14 @@ exports.getFilter = async (req, res, next) => {
 
     const trapFilter = await Card.aggregate(TrapFilterPipline);
     const trapRace = trapFilter[0].race;
-
+    console.log(frameTypeMonster)
     return res.status(200).json({
       monsterRace: monsterRace,
       attribute: attribute,
+      frameTypeMonster: frameTypeMonster,
       magicRace: magicRace,
       trapRace:trapRace
+
     });
   } catch (error) {
     return res.status(401).json({ error });
@@ -112,6 +116,7 @@ exports.postSearchCard = async (req, res, next) => {
       atk,
       def,
       level,
+      scale
     } = req.query;
 
     return {
@@ -126,6 +131,7 @@ exports.postSearchCard = async (req, res, next) => {
       atk: atk,
       def: def,
       level: level,
+      scale: scale,
     };
   };
 
@@ -150,7 +156,6 @@ exports.postSearchCard = async (req, res, next) => {
         $match: {
           $and: [
             querySearch, // Vos conditions de recherche
-
           ],
         },
       },
