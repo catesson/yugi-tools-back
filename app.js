@@ -5,6 +5,8 @@ require('dotenv').config();
 const app = express();
 
 const cardRoute = require('./Routes/card')
+const userRoute = require('./Routes/user')
+
 
 mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@yugidata.dbmumtw.mongodb.net/?retryWrites=true&w=majority`,
   { useNewUrlParser: true,
@@ -27,6 +29,7 @@ mongoose.connect(`mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD
   app.use(express.json());
 
   app.use('/cards', cardRoute)
+  app.use('/user', userRoute)
 
 
 module.exports = app;
