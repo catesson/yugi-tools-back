@@ -1,5 +1,5 @@
 const Card = require("../models/Card");
-const allCard = require("../data/data.json");
+// const allCard = require("../data/data.json");
 
 //get
 
@@ -87,25 +87,25 @@ exports.getFilter = async (req, res, next) => {
 };
 //post
 //création des cartes dans la bdd
-exports.createAllCard = (req, res, next) => {
-  const cardsToSave = allCard.map((cardObject) => {
-    const images = cardObject.card_images.map((image) => {
-      return {
-        ...image,
-      };
-    });
-    const newCard = new Card({ ...cardObject, card_images: images });
-    return newCard;
-  });
-  Card.insertMany(cardsToSave)
-    .then(() => {
-      res.status(201).json({ message: "Cards save !" });
-    })
-    .catch((error) => {
-      console.log("erreur");
-      res.status(400).json({ error });
-    });
-};
+// exports.createAllCard = (req, res, next) => {
+//   const cardsToSave = allCard.map((cardObject) => {
+//     const images = cardObject.card_images.map((image) => {
+//       return {
+//         ...image,
+//       };
+//     });
+//     const newCard = new Card({ ...cardObject, card_images: images });
+//     return newCard;
+//   });
+//   Card.insertMany(cardsToSave)
+//     .then(() => {
+//       res.status(201).json({ message: "Cards save !" });
+//     })
+//     .catch((error) => {
+//       console.log("erreur");
+//       res.status(400).json({ error });
+//     });
+// };
 
 exports.postSearchCard = async (req, res, next) => {
   const { page = 1, limit = 30 } = req.query;
