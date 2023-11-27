@@ -65,7 +65,14 @@ exports.getFilter = async (req, res, next) => {
 
     const trapFilter = await Card.aggregate(TrapFilterPipline);
     const trapRace = trapFilter[0].race;
-    console.log(frameTypeMonster)
+    console.log({
+      monsterRace: monsterRace,
+      attribute: attribute,
+      frameTypeMonster: frameTypeMonster,
+      magicRace: magicRace,
+      trapRace:trapRace
+
+    })
     return res.status(200).json({
       monsterRace: monsterRace,
       attribute: attribute,
